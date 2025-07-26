@@ -1,0 +1,8 @@
+.venv
+build
+__pycache__
+*.pyc
+outputs
+cache
+data
+*.egg-info
