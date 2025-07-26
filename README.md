@@ -5,6 +5,8 @@
 
 ***Work in progress...***
 
+![Build Status](https://img.shields.io/github/actions/workflow/status/gmum./gmumcl/ci-cd.yml) ![Version](https://img.shields.io/badge/gmumcl_ver.-0.1.0-blue) ![Python](https://img.shields.io/badge/Python-3.8-purple)
+
 Python 3.8 due to Continuum dependency.
 Based on: https://github.com/OneAndZero24/local-cl
 
