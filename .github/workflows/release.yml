@@ -46,7 +46,7 @@ jobs:
       - name: Check the wheel installs and imports
         run: |
           python -m venv /tmp/check
-          /tmp/check/bin/pip install dist/*.whl
+          /tmp/check/bin/pip install --no-deps dist/*.whl
           /tmp/check/bin/python -c "import gmumcl; print(gmumcl.__version__)"
 
       - name: Upload distributions
