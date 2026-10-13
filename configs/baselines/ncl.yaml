@@ -1,0 +1,36 @@
+# NCL (no opt), NCL-paper baseline (Kao et al., NeurIPS 2021) on Split MNIST
+# class-incremental. Protocol (paper Appendix E): batch 256, 2000 iterations
+# per task, SGD with momentum 0.9 and lr 0.05, single 10-way output layer.
+# Unit Gaussian prior (p_w^-2 = 1), projection stabiliser 1e-10, lambda 1.
+# See docs/results.md for the full protocol and documented deviations.
+# Run: python scripts/run.py --config configs/baselines/ncl.yaml
+seed: 0
+
+data:
+  name: mnist
+  root: data
+  classes_per_task: 2
+  calibration_fraction: 0.0
+  min_calibration: 0
+  batch_size: 256
+
+model:
+  name: mlp
+  input_dim: 784
+  hidden: 400
+  layers: 2
+  growing_head: false
+
+trainer:
+  optimizer: sgd
+  momentum: 0.9
+  lr: 0.05
+  iterations: 2000
+  device: cuda
+
+method:
+  name: ncl
+  data_size: 1.0              # unit prior: NCL (no opt)
+  projection_alpha: 0.0000000001
+  lambda: 1.0
+  kfac_samples: 256

@@ -1,4 +1,0 @@
-_partial_: True
-_target_: continuum.datasets.FashionMNIST
-data_path: ${oc.env:DATA_DIR}/fmnist
-download: True

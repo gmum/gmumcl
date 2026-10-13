@@ -1,0 +1,35 @@
+# OWM, NCL-paper baseline (Kao et al., NeurIPS 2021) on Split MNIST
+# class-incremental. Protocol (paper Appendix E): batch 256, 2000 iterations
+# per task, SGD with momentum 0.9 and lr 0.05, single 10-way output layer
+# (growing_head false, as in the official class-IL setup). The projector is
+# the official one from the NCL feedforward fork's base code: the augmented
+# input second moment (bias included) averaged over tasks, with the fixed
+# stabiliser alpha = 1e-4 (Table 1, CIL optimum).
+# Run: python scripts/run.py --config configs/baselines/owm.yaml
+seed: 0
+
+data:
+  name: mnist
+  root: data
+  classes_per_task: 2
+  calibration_fraction: 0.0
+  min_calibration: 0
+  batch_size: 256
+
+model:
+  name: mlp
+  input_dim: 784
+  hidden: 400
+  layers: 2
+  growing_head: false
+
+trainer:
+  optimizer: sgd
+  momentum: 0.9
+  lr: 0.05
+  iterations: 2000
+  device: cuda
+
+method:
+  name: owm
+  alpha: 0.0001               # fixed projector stabiliser (Table 1, CIL optimum)

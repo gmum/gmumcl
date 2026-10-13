@@ -1,0 +1,28 @@
+# Task-incremental toy run: class split + task-oracle evaluation (CPU).
+# Run: python scripts/run.py --config configs/exp/toy_task_incremental.yaml
+seed: 0
+
+data:
+  name: toy
+  scenario: task_incremental
+  dimension: 6
+  num_classes: 4
+  classes_per_task: 2
+  samples_per_class: 40
+  calibration_fraction: 0.1
+  min_calibration: 30
+  batch_size: 32
+
+model:
+  name: mlp
+  hidden: 16
+  layers: 2
+  growing_head: true
+
+trainer:
+  epochs: 1
+  lr: 0.01
+  device: cpu
+
+method:
+  name: naive

@@ -1,0 +1,31 @@
+# K-FAC, NCL-paper baseline (Kao et al., 2021) on Split MNIST class-incremental.
+# Protocol: 4 epochs/task, batch 128, Adam lr=1e-3, all training data.
+# `lambda` is not tuned here (the NCL paper tunes it per experiment).
+# See docs/results.md for the full protocol and documented deviations.
+# Run: python scripts/run.py --config configs/baselines/kfac.yaml
+seed: 0
+
+data:
+  name: mnist
+  root: data
+  classes_per_task: 2
+  calibration_fraction: 0.0
+  min_calibration: 0
+  batch_size: 128
+
+model:
+  name: mlp
+  input_dim: 784
+  hidden: 400
+  layers: 2
+  growing_head: true
+
+trainer:
+  epochs: 4
+  lr: 0.001
+  device: cuda
+
+method:
+  name: kfac
+  lambda: 1.0
+  kfac_samples: 256           # output-gradient samples per task

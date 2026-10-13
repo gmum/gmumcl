@@ -1,0 +1,32 @@
+# EWC-DR, port of `scarlet0703/EWC-DR` (commit adcaaeb9) on Split MNIST.
+# Protocol: 4 epochs/task, batch 128, Adam lr=1e-3, all training data.
+# The importance is the reversed-logit gradient squared, averaged over the
+# task loader and clamped at `omegamax`, merged with alpha = known/total.
+# See docs/results.md for the full protocol and documented deviations.
+# Run: python scripts/run.py --config configs/baselines/ewc_dr.yaml
+seed: 0
+
+data:
+  name: mnist
+  root: data
+  classes_per_task: 2
+  calibration_fraction: 0.0
+  min_calibration: 0
+  batch_size: 128
+
+model:
+  name: mlp
+  input_dim: 784
+  hidden: 400
+  layers: 2
+  growing_head: true
+
+trainer:
+  epochs: 4
+  lr: 0.001
+  device: cuda
+
+method:
+  name: ewc_dr
+  lambda: 1.0
+  omegamax: 0.0001            # official clamp

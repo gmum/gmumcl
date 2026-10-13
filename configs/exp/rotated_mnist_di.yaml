@@ -1,0 +1,28 @@
+# Rotated MNIST, domain-incremental: all classes in every task, evenly
+# spaced rotations, one shared 10-way head.
+# Run: python scripts/run.py --config configs/exp/rotated_mnist_di.yaml
+seed: 0
+
+data:
+  name: rotated_mnist
+  root: data
+  num_tasks: 5
+  calibration_fraction: 0.0
+  min_calibration: 0
+  batch_size: 128
+
+model:
+  name: mlp
+  input_dim: 784
+  hidden: 400
+  layers: 2
+  growing_head: false
+
+trainer:
+  epochs: 4
+  lr: 0.001
+  device: cuda
+
+method:
+  name: l2
+  lambda: 100.0

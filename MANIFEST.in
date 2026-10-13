@@ -1,6 +1,7 @@
-recursive-include gmumcl/config *.yaml
-include gmumcl/*.py
-recursive-include gmumcl/method *.py
-recursive-include gmumcl/model *.py
-recursive-include gmumcl/scenario *.py
-recursive-include gmumcl/util *.py
+include LICENSE README.md pyproject.toml
+graft configs
+graft docs
+graft examples
+graft scripts
+graft tests
+global-exclude __pycache__ *.pyc .DS_Store

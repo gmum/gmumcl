@@ -1,0 +1,29 @@
+# Split MNIST, task-incremental: same split, evaluation with the task oracle
+# (logits are masked to the task's own classes).
+# Run: python scripts/run.py --config configs/exp/split_mnist_ti.yaml
+seed: 0
+
+data:
+  name: mnist
+  scenario: task_incremental
+  root: data
+  classes_per_task: 2
+  calibration_fraction: 0.0
+  min_calibration: 0
+  batch_size: 128
+
+model:
+  name: mlp
+  input_dim: 784
+  hidden: 400
+  layers: 2
+  growing_head: true
+
+trainer:
+  epochs: 4
+  lr: 0.001
+  device: cuda
+
+method:
+  name: ewc
+  lambda: 600.0

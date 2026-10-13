@@ -1,31 +1,50 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "gmumcl"
-version = "0.1.0"
-description = "GMUM Continual Learning Framework"
-authors = [
-    { name = "Jan Miksa" },
-    { name = "Patryk Krukowski" }
-]
+version = "1.0.0"
+description = "A generic continual-learning framework: scenarios, methods, metrics"
 readme = "README.md"
-requires-python = ">=3.8"
-license = { text = "MIT" }
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+keywords = ["continual-learning", "pytorch", "class-incremental", "benchmark"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
-    "hydra-core>=1.3.2",
-    "omegaconf>=2.3.0",
-    "torch>=2.4.1",
-    "torchvision>=0.19.1",
-    "lightning>=2.3.0",
-    "lightning-fabric>=2.3.0",
-    "continuum>=1.2.7",
-    "python-dotenv>=1.0.0",
+    "torch>=2.0",
+    "numpy",
+    "PyYAML",
+    "activationscope>=0.1.4",
 ]
 
-[tool.setuptools]
-include-package-data = true
+[project.optional-dependencies]
+datasets = ["torchvision"]
+viz = ["matplotlib"]
+test = ["pytest>=7", "torchvision", "ruff"]
+
+[project.urls]
+Repository = "https://github.com/gmum/gmumcl"
 
 [tool.setuptools.packages.find]
-where = ["gmumcl"]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]

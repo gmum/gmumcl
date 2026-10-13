@@ -1,0 +1,32 @@
+# InTAct, port of `pkrukowski1/InTAct` (commit 83b90c55) on Split MNIST
+# class-incremental. InTAct paper protocol: 2x400 MLP, batch 512, 5 epochs,
+# Adam lr=2e-4, and the published class-IL coefficients.
+# See docs/results.md for the full protocol and documented deviations.
+# Run: python scripts/run.py --config configs/baselines/intact.yaml
+seed: 0
+
+data:
+  name: mnist
+  root: data
+  classes_per_task: 2
+  calibration_fraction: 0.0
+  min_calibration: 0
+  batch_size: 512
+
+model:
+  name: mlp
+  input_dim: 784
+  hidden: 400
+  layers: 2
+  growing_head: true
+
+trainer:
+  epochs: 5
+  lr: 0.0002
+  device: cuda
+
+method:
+  name: intact
+  var_scale: 4.2              # published class-IL coefficients
+  lambda_int_drift: 6.0
+  lambda_feat: 779.0

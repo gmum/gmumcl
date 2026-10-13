@@ -1,0 +1,29 @@
+# Permuted MNIST: one fixed random pixel permutation per task, task 0 keeps
+# the identity, classes unchanged (domain-incremental evaluation).
+# Run: python scripts/run.py --config configs/exp/permuted_mnist.yaml
+seed: 0
+
+data:
+  name: permuted_mnist
+  root: data
+  num_tasks: 5
+  identity_first: true
+  calibration_fraction: 0.0
+  min_calibration: 0
+  batch_size: 128
+
+model:
+  name: mlp
+  input_dim: 784
+  hidden: 400
+  layers: 2
+  growing_head: false
+
+trainer:
+  epochs: 4
+  lr: 0.001
+  device: cuda
+
+method:
+  name: ewc
+  lambda: 600.0

@@ -1,0 +1,32 @@
+# CPU quickstart: tiny Gaussian clusters, class-incremental, EWC.
+# Run: python scripts/run.py --config configs/base.yaml
+seed: 0
+
+data:
+  name: toy              # toy | mnist | cifar10 | cifar100 | permuted_mnist | rotated_mnist
+  scenario: class_incremental   # class_incremental | task_incremental | domain_incremental | instance_incremental | permuted
+  dimension: 8
+  num_classes: 6
+  classes_per_task: 2
+  samples_per_class: 150
+  num_tasks: 5           # used by instance_incremental / domain_incremental / permuted
+  calibration_fraction: 0.1
+  min_calibration: 50
+  batch_size: 32
+
+model:
+  name: mlp              # mlp | small_cnn | resnet18 | vit
+  hidden: 64
+  layers: 2
+  head_type: linear      # linear | rbf (rbf is required by Dreaming)
+  growing_head: true     # default: true for class/task-incremental, false otherwise
+
+trainer:
+  epochs: 1
+  lr: 0.01
+  device: cpu
+  verbose: false         # per-task/epoch progress and timing prints
+
+method:
+  name: ewc              # naive | l2 | ewc | ewc_dr | online_ewc | si | mas | lwf |
+  lambda: 0.1            # kfac | ncl | owm | gpm | intact | sharpening | dreaming
