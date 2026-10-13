@@ -93,6 +93,7 @@ jobs:
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
           verbose: true
+          skip-existing: true   # re-runs of an already uploaded version stay green
 
   dry-run:
     needs: [build]
