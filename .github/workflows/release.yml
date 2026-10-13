@@ -1,21 +1,31 @@
-# Release: build sdist + wheel, publish to PyPI on a `v*` tag.
+# CI Release — build sdist + wheel and publish to PyPI on a `v*` tag.
 #
-# Publishing needs the repository secret PYPI_API_TOKEN (a project-scoped PyPI
-# API token); manual runs can publish to TestPyPI with TEST_PYPI_API_TOKEN.
-# Both jobs run in protected GitHub environments (`release` / `testpypi`), so
-# required reviewers can gate the publish step.
+# Mirrors ActivationScope's release flow:
+#   - `v*` tag push          -> PyPI        (secret PYPI_API_TOKEN)
+#   - branch push whose commit message contains `[testpypi]` -> TestPyPI
+#     (secret TEST_PYPI_API_TOKEN)
+#   - manual run with dry_run -> build only
+#
+# The publish jobs run in GitHub environments (`release`, `testpypi`) so
+# required reviewers can gate them; delete the `environment:` lines to publish
+# without approval. Tokens are project-scoped PyPI API tokens; see the README
+# for the one-time setup.
 
-name: Release
+name: CI Release
 
 on:
   push:
-    tags: ["v*"]
+    tags:
+      - "v*"
+    branches:
+      - "*"
   workflow_dispatch:
     inputs:
-      publish:
-        description: "Publish the built distribution to TestPyPI"
-        type: boolean
+      dry_run:
+        description: "If yes, build only — do not publish to PyPI."
         default: false
+        required: false
+        type: boolean
 
 permissions:
   contents: read
@@ -42,36 +52,41 @@ jobs:
           /tmp/check/bin/pip install dist/*.whl
           /tmp/check/bin/python -c "import gmumcl; print(gmumcl.__version__)"
 
-      - name: Upload artifacts
+      - name: Upload distributions
         uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/*
 
   publish-to-pypi:
-    needs: build
+    needs: [build]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     environment: release
     steps:
-      - name: Download artifacts
+      - name: Download distributions
         uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
 
-      - name: Publish to PyPI
+      - name: Publish to PyPI (stable)
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+          repository-url: https://upload.pypi.org/legacy/
+          verbose: true
 
   publish-to-testpypi:
-    needs: build
-    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    needs: [build]
+    if: >-
+      github.event_name == 'push' &&
+      !startsWith(github.ref, 'refs/tags/') &&
+      contains(github.event.head_commit.message, '[testpypi]')
     runs-on: ubuntu-latest
     environment: testpypi
     steps:
-      - name: Download artifacts
+      - name: Download distributions
         uses: actions/download-artifact@v4
         with:
           name: dist
@@ -82,3 +97,20 @@ jobs:
         with:
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
+          verbose: true
+
+  dry-run:
+    needs: [build]
+    if: github.event_name == 'workflow_dispatch' && inputs.dry_run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Dry-run summary (no publishing)
+        run: |
+          echo "DRY-RUN — distributions downloaded in dist/ but NOT published."
+          ls -lR dist/
