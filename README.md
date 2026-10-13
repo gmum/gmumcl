@@ -1,8 +1,8 @@
 # gmumcl
 
 [![CI](https://github.com/gmum/gmumcl/actions/workflows/ci.yml/badge.svg)](https://github.com/gmum/gmumcl/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/gmumcl)](https://pypi.org/project/gmumcl/)
-[![Python](https://img.shields.io/pypi/pyversions/gmumcl)](https://pypi.org/project/gmumcl/)
+[![PyPI](https://img.shields.io/pypi/v/gmumcl.svg)](https://pypi.org/project/gmumcl/)
+[![Python](https://img.shields.io/pypi/pyversions/gmumcl.svg)](https://pypi.org/project/gmumcl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A small, generic continual-learning framework for PyTorch: five incremental
