@@ -11,12 +11,18 @@ implementations of the standard CL baselines.
 
 ## Install
 
+`activationscope` builds a C++ extension with `-std=c++17`, so install torch 2.8
+first (newer torch headers require C++20), then build it against that torch:
+
 ```bash
-pip install gmumcl              # torch, numpy, PyYAML, activationscope
-pip install "gmumcl[datasets]"  # + torchvision dataset wrappers
+pip install "torch==2.8.*" --index-url https://download.pytorch.org/whl/cpu   # or /cu128
+pip install setuptools wheel ninja numpy
+pip install activationscope --no-build-isolation
+pip install gmumcl              # or: pip install "gmumcl[datasets]"
 ```
 
 From source: `git clone https://github.com/gmum/gmumcl && cd gmumcl && pip install -e ".[test]"`.
+Full notes (why the pin, why `--no-build-isolation`): `docs/usage.md`.
 
 ## Quickstart
 

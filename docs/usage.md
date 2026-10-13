@@ -2,14 +2,22 @@
 
 ## Install
 
+`activationscope` builds a C++ extension with `-std=c++17`; torch 2.9+ headers
+require C++20, so torch is pinned to 2.8 and activationscope is built against
+it with `--no-build-isolation` (build isolation would fetch a newer torch and
+download several GB of CUDA wheels):
+
 ```bash
+pip install "torch==2.8.*" --index-url https://download.pytorch.org/whl/cpu   # or /cu128
+pip install setuptools wheel ninja numpy
+pip install activationscope --no-build-isolation
 pip install gmumcl              # core: torch, numpy, PyYAML, activationscope
 pip install "gmumcl[datasets]"  # + torchvision dataset wrappers
 pip install "gmumcl[viz]"       # + matplotlib
 ```
 
-From source: `pip install -e ".[test]"` (needs a C++ toolchain for
-activationscope). Python >= 3.10.
+From source: `git clone https://github.com/gmum/gmumcl && cd gmumcl && pip install -e ".[test]"`.
+Python >= 3.10; a C++ toolchain is needed for the activationscope build.
 
 ## Command line
 

@@ -47,7 +47,9 @@ the split and shuffle generators seeded from the config `seed`.
 
 `cl/collect.py` uses the `activationscope` PyPI package with
 `capture="input"` (or `"output"`) and `CaptureMode.SNAPSHOT`; it returns one
-CPU tensor per named layer, concatenated over a loader. Captures that need
+CPU tensor per named layer, concatenated over a loader. activationscope builds
+with `-std=c++17`, so install torch 2.8 before building it (see
+`docs/usage.md`). Captures that need
 gradients (K-FAC output-gradient covariance, NCL factors) stay on raw forward
 hooks in `cl/baselines/common.py`, because ActivationScope detaches every
 capture.

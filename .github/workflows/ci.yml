@@ -40,11 +40,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install build tools and CPU torch
+      # activationscope builds with -std=c++17; torch 2.9+ headers need C++20,
+      # so torch is pinned to 2.8 (same recipe as the AdaReg environment).
+      - name: Install build tools and CPU torch 2.8
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install ninja
+          python -m pip install --upgrade pip setuptools wheel ninja numpy
+          pip install "torch==2.8.*" --index-url https://download.pytorch.org/whl/cpu
 
       - name: Install activationscope (compiles the C++ extension against torch)
         run: pip install --no-build-isolation activationscope
