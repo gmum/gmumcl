@@ -86,5 +86,7 @@ the task loader and clamped at `omegamax`, merged across tasks with
 
 ## Custom methods
 
-Subclass `MethodPluginABC`, implement the calls you need and register the class
-in `cl/baselines/__init__.py`. See `examples/custom_method.py`.
+Subclass `MethodPluginABC`, implement the calls you need (including `scores`
+for a non-linear predictor and `diagnostics`/`figures` for reports) and
+register the class in `cl/baselines/__init__.py`. See
+`examples/custom_method.py`.

@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 
 from .composer import Composer
-from .metrics import AccuracyMatrix, task_accuracy
+from .metrics import AccuracyMatrix, new_class_margin, restricted_accuracy, task_accuracy
 from .plugin import MethodPluginABC
 from .scenarios import TaskData
 
@@ -27,7 +27,7 @@ class TrainerConfig:
     iterations: Optional[int] = None
     verbose: bool = False
     task_oracle: bool = False
-    """Mask the logits to the evaluated task's classes (task-incremental)."""
+    """Mask the scores to the evaluated task's classes (task-incremental)."""
 
 
 class Trainer:
@@ -47,13 +47,12 @@ class Trainer:
         self.composer = Composer(self.model, self.criterion, self.plugins)
         for plugin in self.plugins:
             plugin.set_model(self.model)
+        self.scores = self.plugins[0].scores if self.plugins else self.model
 
     def _make_optimizer(self) -> torch.optim.Optimizer:
         parameters = [p for p in self.model.parameters() if p.requires_grad]
         if self.config.optimizer == "sgd":
-            return torch.optim.SGD(
-                parameters, lr=self.config.lr, momentum=self.config.momentum
-            )
+            return torch.optim.SGD(parameters, lr=self.config.lr, momentum=self.config.momentum)
         return torch.optim.Adam(parameters, lr=self.config.lr)
 
     def _train_task(
@@ -94,28 +93,73 @@ class Trainer:
     def run(self, tasks: List[TaskData]) -> AccuracyMatrix:
         matrix = AccuracyMatrix()
         seen_classes: List[int] = []
+        cumulative: List[List[int]] = []
         for position, task in enumerate(tasks):
             seen_classes.extend(task.classes)
+            previous = cumulative[-1] if cumulative else []
+            cumulative.append(sorted(set(previous) | set(task.classes)))
             self.model.expand_head(max(seen_classes) + 1)
             if self.config.verbose:
                 print("task %d/%d start" % (position + 1, len(tasks)), flush=True)
             for plugin in self.plugins:
-                plugin.setup_task(task.task_id)
+                plugin.setup_task(task.task_id, task)
             optimizer = self._make_optimizer()
             self._train_task(task, optimizer)
 
             for plugin in self.plugins:
                 plugin.on_task_end(task.task_id, task)
 
-            row = [
-                task_accuracy(
-                    self.model,
-                    tasks[s].test_loader,
-                    self.device,
-                    classes=tasks[s].classes,
-                    mask_logits=self.config.task_oracle,
+            self.model.eval()
+            matrix.append(
+                [
+                    task_accuracy(
+                        self.scores,
+                        tasks[s].test_loader,
+                        self.device,
+                        classes=tasks[s].classes,
+                        mask_logits=self.config.task_oracle,
+                    )
+                    for s in range(position + 1)
+                ]
+            )
+            matrix.append_old_class(
+                [
+                    restricted_accuracy(self.scores, tasks[s].test_loader, self.device, cumulative[s])
+                    for s in range(position + 1)
+                ]
+            )
+            matrix.append_task_aware(
+                [
+                    restricted_accuracy(self.scores, tasks[s].test_loader, self.device, tasks[s].classes)
+                    for s in range(position + 1)
+                ]
+            )
+            matrix.append_new_class_margins(
+                [
+                    new_class_margin(
+                        self.scores,
+                        tasks[s].test_loader,
+                        self.device,
+                        [c for c in cumulative[position] if c not in cumulative[s]],
+                    )
+                    if s < position
+                    else None
+                    for s in range(position + 1)
+                ]
+            )
+            if any(task.validation_loader is not None for task in tasks):
+                matrix.append_validation(
+                    [
+                        task_accuracy(
+                            self.scores,
+                            tasks[s].validation_loader,
+                            self.device,
+                            classes=tasks[s].classes,
+                            mask_logits=self.config.task_oracle,
+                        )
+                        if tasks[s].validation_loader is not None
+                        else None
+                        for s in range(position + 1)
+                    ]
                 )
-                for s in range(position + 1)
-            ]
-            matrix.append(row)
         return matrix

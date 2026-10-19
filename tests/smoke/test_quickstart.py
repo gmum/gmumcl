@@ -30,7 +30,13 @@ def test_toy_class_incremental_run():
     metrics = train.run(_toy())
     assert metrics["scenario"] == "class_incremental"
     assert len(metrics["accuracy_matrix"]) == 2
+    assert len(metrics["old_class_matrix"]) == 2
+    assert len(metrics["task_aware_matrix"]) == 2
+    assert len(metrics["new_class_margin"]) == 2
+    assert metrics["validation_matrix"] == []
     assert math.isfinite(metrics["average_incremental_accuracy"])
+    assert math.isfinite(metrics["final_average_accuracy"])
+    assert math.isfinite(metrics["final_old_class_accuracy"])
     assert math.isfinite(metrics["forgetting"])
 
 

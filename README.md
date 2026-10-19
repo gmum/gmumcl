@@ -6,8 +6,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A small, generic continual-learning framework for PyTorch: five incremental
-scenarios, a five-call plugin API, an accuracy-matrix trainer, and reference
-implementations of the standard CL baselines.
+scenarios, a plugin API with task-lifecycle hooks, an accuracy-matrix trainer,
+and reference implementations of the standard CL baselines.
 
 ## Install
 

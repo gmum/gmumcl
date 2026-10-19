@@ -5,4 +5,4 @@ instance-incremental and permuted scenarios and the standard continual-learning
 baselines. Extracted from the original gmumcl prototype and shared with AdaReg.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

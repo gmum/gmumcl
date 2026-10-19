@@ -8,7 +8,7 @@ which the Dreaming method replays.
 
 from __future__ import annotations
 
-from typing import List
+from typing import List, Tuple
 
 import torch
 import torch.nn as nn
@@ -145,3 +145,58 @@ class ViT(nn.Module):
             return
         self.head = _grow_linear_head(self.head, n_classes)
         self.n_classes = n_classes
+
+
+PLACEMENTS = {
+    "all": "*",
+    "last_layer": "*layer4.*,*head",
+    "head": "*head",
+    "head_and_last_blocks": "*layer3.*,*layer4.*,*head",
+    "extractor_layer": "*layer2.*,*head",
+    "vit_head": "head",
+    "vit_head_and_last_block": "*encoder.layers.encoder_layer_11.*,head",
+}
+
+
+def paired_batchnorm(model: nn.Module, name: str):
+    """The BatchNorm sibling immediately following an affine layer, if any."""
+    from torch.nn.modules.batchnorm import _BatchNorm
+
+    parent_name, _, child = name.rpartition(".")
+    parent = model.get_submodule(parent_name) if parent_name else model
+    children = list(parent._modules.items())
+    for index, (child_name, module) in enumerate(children):
+        if child_name == child and index + 1 < len(children):
+            candidate = children[index + 1][1]
+            if isinstance(candidate, _BatchNorm):
+                return candidate
+    return None
+
+
+def protected_layers(
+    model: nn.Module, include: str = "*", head_name: str = "head"
+) -> List[Tuple[str, nn.Module]]:
+    """Ordered (name, module) list of protected affine units.
+
+    Containers are not matched; ``head_name`` names the classification head
+    (its new-class rows are excluded from the penalty).
+    """
+    from fnmatch import fnmatch
+
+    patterns = [pattern.strip() for pattern in include.split(",") if pattern.strip()]
+    blocks: List[Tuple[str, nn.Module]] = []
+    for name, module in model.named_modules():
+        if isinstance(module, PROTECTED_TYPES) and any(fnmatch(name, p) for p in patterns):
+            blocks.append((name, module))
+    if not blocks:
+        raise ValueError("no protected layers found with include=%r" % include)
+    if not any(name == head_name or name.endswith("." + head_name) for name, _ in blocks):
+        raise ValueError("head %r is not among the protected layers" % head_name)
+    return blocks
+
+
+def placement_include(place: str, model: nn.Module) -> str:
+    """Include pattern for the L1 placements; the head is added where needed."""
+    if place in PLACEMENTS:
+        return PLACEMENTS[place]
+    raise KeyError("unknown placement %r (known: %s)" % (place, sorted(PLACEMENTS)))

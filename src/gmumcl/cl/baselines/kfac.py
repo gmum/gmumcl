@@ -78,7 +78,7 @@ class KFAC(MethodPluginABC):
         delta = torch.cat([weight, bias.unsqueeze(1)], dim=1)
         gram = self.output_grads.get(name)
         if gram is None:
-            return torch.zeros((), dtype=torch.float64)
+            return torch.zeros((), dtype=torch.float64, device=weight.device)
         factor = self.inputs[name].to(weight.device)
         value = delta.double() @ factor @ delta.double().transpose(0, 1)
         return (gram * value).sum()

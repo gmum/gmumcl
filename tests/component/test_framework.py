@@ -26,6 +26,10 @@ def test_trainer_runs_without_plugins_and_fills_matrix():
     assert len(matrix.rows) == 2
     assert all(0.0 <= value <= 1.0 for row in matrix.rows for value in row)
     assert matrix.final_old_new()[1] >= 0.0
+    assert len(matrix.old_class_rows) == 2
+    assert len(matrix.task_aware_rows) == 2
+    assert len(matrix.new_class_margin_rows) == 2
+    assert matrix.validation_rows == []
 
 
 def test_accuracy_matrix_metrics():

@@ -19,7 +19,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -120,7 +120,7 @@ class GPM(MethodPluginABC):
         super().__init__(config)
         self.bases: Dict[str, torch.Tensor] = {}
 
-    def setup_task(self, task_id: int) -> None:
+    def setup_task(self, task_id: int, task: Optional[Any] = None) -> None:
         self.task_id = task_id
 
     def on_after_backward(self) -> None:

@@ -19,7 +19,7 @@ Sources:
 from __future__ import annotations
 
 import copy
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import torch
 import torch.nn.functional as F
@@ -138,7 +138,7 @@ class EWC(MethodPluginABC):
 class SI(MethodPluginABC):
     """Synaptic Intelligence (Zenke et al., 2017); port follows gmumcl (MIT)."""
 
-    def setup_task(self, task_id: int) -> None:
+    def setup_task(self, task_id: int, task: Optional[Any] = None) -> None:
         assert self.model is not None
         self.star = getattr(self, "star", parameter_snapshot(self.model))
         self.omega = {n: torch.zeros_like(p) for n, p in self.model.named_parameters()}
@@ -218,7 +218,7 @@ class LwF(MethodPluginABC):
     lambda alone is too weak once several tasks have been seen.
     """
 
-    def setup_task(self, task_id: int) -> None:
+    def setup_task(self, task_id: int, task: Optional[Any] = None) -> None:
         assert self.model is not None
         self.task_id = task_id
         self.teacher = copy.deepcopy(self.model).eval()

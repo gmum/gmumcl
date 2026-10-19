@@ -26,6 +26,10 @@ def _labels(task, split: str = "fit"):
     return [int(targets[i]) for i in subset.indices]
 
 
+def _indices(task, split: str = "fit"):
+    return set(getattr(task, split + "_loader").dataset.indices)
+
+
 def _split_kwargs(**overrides):
     settings = {"calibration_fraction": 0.1, "min_calibration": 20, "batch_size": 16, "seed": 0}
     settings.update(overrides)
@@ -43,6 +47,38 @@ def test_class_incremental_splits_are_disjoint_and_cover_each_class():
         assert len(task.fit_loader.dataset) > 0
         assert len(task.calibration_loader.dataset) > 0
         assert set(_labels(task, "test")) <= set(task.classes)
+
+
+def test_class_incremental_validation_split_is_disjoint():
+    train, test = _pair()
+    tasks = class_incremental_tasks(
+        train, test, [[0, 1], [2, 3]], **_split_kwargs(validation_fraction=0.2)
+    )
+    for task in tasks:
+        assert task.validation_loader is not None
+        fitting = _indices(task, "fit")
+        calibration = _indices(task, "calibration")
+        validation = _indices(task, "validation")
+        assert fitting and calibration and validation
+        assert not fitting & calibration
+        assert not fitting & validation
+        assert not calibration & validation
+
+
+def test_class_incremental_calibration_in_fit_trains_on_the_calibration_images():
+    train, test = _pair()
+    tasks = class_incremental_tasks(
+        train,
+        test,
+        [[0, 1], [2, 3]],
+        **_split_kwargs(calibration_in_fit=True, validation_fraction=0.1),
+    )
+    for task in tasks:
+        fitting = _indices(task, "fit")
+        calibration = _indices(task, "calibration")
+        validation = _indices(task, "validation")
+        assert calibration <= fitting
+        assert not validation & fitting
 
 
 def test_task_incremental_split_matches_class_incremental():

@@ -46,9 +46,14 @@ metrics = train.run({
 })
 ```
 
-`metrics` holds `accuracy_matrix` (`R[t][s]`), `average_incremental_accuracy`,
-`forgetting`, `backward_transfer`, `forward_transfer`, `old_new`, `scenario`,
-`method` and `seed`.
+`metrics` holds `accuracy_matrix` (`R[t][s]`), `old_class_matrix`,
+`task_aware_matrix`, `new_class_margin`, `validation_matrix`,
+`average_incremental_accuracy`, `final_average_accuracy`,
+`validation_final_average_accuracy`, `forgetting`, `backward_transfer`,
+`forward_transfer`, `old_new`, `final_old_class_accuracy`, `scenario`,
+`method` and `seed`. Pass `output_dir=` to `train.run` to save plugin figure
+payloads and let plugins write their figures; `diagnostics: true` in the
+config merges the plugins' `diagnostics()` into the metrics.
 
 ## Config reference
 
@@ -59,6 +64,8 @@ metrics = train.run({
 | `data.scenario` | `class_incremental`, `task_incremental`, `domain_incremental`, `instance_incremental`, `permuted` |
 | `data.classes_per_task` / `data.num_tasks` | CI/TI group size / number of tasks for the other scenarios |
 | `data.calibration_fraction`, `data.min_calibration` | held-out calibration subset (set 0 to train on all data) |
+| `data.validation_fraction`, `data.calibration_in_fit` | held-out validation slice; also train on the calibration images |
+| `data.image_size` | resize for the CIFAR loaders (224 for ViT) |
 | `data.batch_size`, `data.root` | loader batch size, dataset cache dir |
 | `model.name` | `mlp`, `small_cnn`, `resnet18`, `vit` |
 | `model.head_type` | `linear` (default) or `rbf` (Dreaming) |

@@ -2,9 +2,9 @@
 
 `data.scenario` selects the task builder; `data.name` selects the dataset.
 `rotated_mnist` and `permuted_mnist` imply their scenario. Each builder returns
-`TaskData(task_id, classes, fit_loader, calibration_loader, test_loader)`, and
-the trainer evaluates every task seen so far after each new task, producing the
-accuracy matrix `R[t][s]`.
+`TaskData(task_id, classes, fit_loader, calibration_loader, test_loader,
+validation_loader=None)`, and the trainer evaluates every task seen so far
+after each new task, producing the accuracy matrix `R[t][s]`.
 
 ## class_incremental (CI)
 
@@ -57,13 +57,16 @@ change). Classes and head are unchanged (Permuted MNIST protocol).
 data: {name: permuted_mnist, num_tasks: 5}
 ```
 
-## Calibration split
+## Calibration and validation split
 
-Every task's training set is split into a fitting subset and a held-out
+Every task's training set is split into a fitting subset, a held-out
 calibration subset (`data.calibration_fraction`, at least
-`data.min_calibration` images). Baselines train on all data and set both to 0;
-calibration-style methods (e.g. AdaReg) keep the split. The split and the
-loader shuffles are driven by the config `seed`.
+`data.min_calibration` images) and an optional validation subset
+(`data.validation_fraction`, carved out of the fitting images;
+`data.calibration_in_fit: true` trains on the calibration images as well while
+still exposing them through `calibration_loader`). Baselines train on all data
+and set both to 0; calibration-style methods (e.g. AdaReg) keep the split. The
+split and the loader shuffles are driven by the config `seed`.
 
 ## Datasets
 
@@ -71,8 +74,8 @@ loader shuffles are driven by the config `seed`.
 |---|---|---|
 | `toy` | Gaussian class clusters | CPU, no download; `dimension`, `num_classes`, `samples_per_class` |
 | `mnist` | torchvision MNIST, 28x28 normalised | `data.root` cache dir |
-| `cifar10` | torchvision CIFAR-10 | |
-| `cifar100` | torchvision CIFAR-100 | |
+| `cifar10` | torchvision CIFAR-10 | `data.image_size` resizes (e.g. 224 for ViT) |
+| `cifar100` | torchvision CIFAR-100 | `data.image_size` resizes |
 | `rotated_mnist` | MNIST + rotations | domain-incremental |
 | `permuted_mnist` | MNIST + permutations | permuted |
 

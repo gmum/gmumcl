@@ -27,7 +27,7 @@ flattened per-location form rather than being averaged over space.
 from __future__ import annotations
 
 import copy
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -123,7 +123,7 @@ class InTAct(MethodPluginABC):
                 return later_name, later
         return None
 
-    def setup_task(self, task_id: int) -> None:
+    def setup_task(self, task_id: int, task: Optional[Any] = None) -> None:
         assert self.model is not None
         self.task_id = task_id
         for _, module in self._activations():

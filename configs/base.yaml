@@ -12,6 +12,8 @@ data:
   num_tasks: 5           # used by instance_incremental / domain_incremental / permuted
   calibration_fraction: 0.1
   min_calibration: 50
+  validation_fraction: 0.0  # held-out slice of the training images (0 disables)
+  calibration_in_fit: false # train on the calibration images too
   batch_size: 32
 
 model:

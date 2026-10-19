@@ -20,7 +20,7 @@ def main() -> None:
         "outputs", os.path.splitext(os.path.basename(args.config))[0]
     )
     os.makedirs(output_dir, exist_ok=True)
-    metrics = train.run(config)
+    metrics = train.run(config, output_dir)
     with open(os.path.join(output_dir, "metrics.json"), "w") as handle:
         json.dump(metrics, handle, indent=2)
     print(json.dumps(metrics, indent=2))

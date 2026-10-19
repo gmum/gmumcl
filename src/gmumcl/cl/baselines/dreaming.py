@@ -20,7 +20,7 @@ unnormalised L2 norm of the original.
 from __future__ import annotations
 
 import copy
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -64,7 +64,7 @@ class Dreaming(MethodPluginABC):
                 "Dreaming requires an RBF head; set model.head_type='rbf'"
             )
 
-    def setup_task(self, task_id: int) -> None:
+    def setup_task(self, task_id: int, task: Optional[Any] = None) -> None:
         self.task_id = task_id
         self.dreamed = {}
         self.old_model = None

@@ -2,8 +2,9 @@
 
 Every builder returns a list of :class:`TaskData`, one per incremental task.
 Each task's *training* images are split into a fitting subset (the network
-trains on it) and a held-out calibration subset (kept for calibration-style
-methods); the split and shuffle generators are seeded from the config seed.
+trains on it), a held-out calibration subset (kept for calibration-style
+methods) and an optional held-out validation subset (model selection); the
+split and shuffle generators are seeded from the config seed.
 
 Scenarios:
 
@@ -42,6 +43,7 @@ class TaskData:
     fit_loader: DataLoader
     calibration_loader: DataLoader
     test_loader: DataLoader
+    validation_loader: Optional[DataLoader] = None
 
 
 def _targets(dataset: Dataset) -> Sequence[int]:
@@ -86,11 +88,18 @@ def _build_task(
     batch_size: int,
     num_workers: int,
     evaluation_batch_size: int,
+    validation_fraction: float = 0.0,
+    calibration_in_fit: bool = False,
 ) -> TaskData:
-    """Fit/calibration split for one task plus its evaluation loader."""
-    fitting, calibration = _split_indices(
+    """Fit/calibration/validation split for one task plus its evaluation loader."""
+    rest, calibration = _split_indices(
         indices, calibration_fraction, min_calibration, generator
     )
+    validation_size = min(int(validation_fraction * len(indices)), max(len(rest) - 1, 0))
+    validation = rest[:validation_size]
+    fitting = rest[validation_size:]
+    if calibration_in_fit:
+        fitting = calibration + fitting
     return TaskData(
         task_id=task_id,
         classes=[int(c) for c in classes],
@@ -113,6 +122,16 @@ def _build_task(
             shuffle=False,
             num_workers=num_workers,
         ),
+        validation_loader=(
+            DataLoader(
+                Subset(dataset, validation),
+                batch_size=evaluation_batch_size,
+                shuffle=False,
+                num_workers=num_workers,
+            )
+            if validation
+            else None
+        ),
     )
 
 
@@ -133,8 +152,15 @@ def class_incremental_tasks(
     num_workers: int = 0,
     seed: int = 0,
     test_batch_size: Optional[int] = None,
+    validation_fraction: float = 0.0,
+    calibration_in_fit: bool = False,
 ) -> List[TaskData]:
-    """Build TaskData for every class group, with fit/calibration split."""
+    """Build TaskData for every class group, with the split of each task.
+
+    ``validation_fraction`` carves a held-out slice out of the training images
+    (model selection); ``calibration_in_fit`` trains on the calibration images
+    too while still exposing them through ``calibration_loader``.
+    """
     train_targets = _targets(train_dataset)
     test_targets = _targets(test_dataset)
     generator = torch.Generator().manual_seed(seed)
@@ -159,6 +185,8 @@ def class_incremental_tasks(
                 batch_size,
                 num_workers,
                 evaluation_batch_size,
+                validation_fraction,
+                calibration_in_fit,
             )
         )
     return tasks
@@ -189,6 +217,8 @@ def instance_incremental_tasks(
     num_workers: int = 0,
     seed: int = 0,
     test_batch_size: Optional[int] = None,
+    validation_fraction: float = 0.0,
+    calibration_in_fit: bool = False,
 ) -> List[TaskData]:
     """Random partitions of all instances; every task mixes all classes."""
     train_targets = _targets(train_dataset)
@@ -217,6 +247,8 @@ def instance_incremental_tasks(
                 batch_size,
                 num_workers,
                 evaluation_batch_size,
+                validation_fraction,
+                calibration_in_fit,
             )
         )
     return tasks
@@ -250,6 +282,8 @@ def domain_incremental_tasks(
     num_workers: int = 0,
     seed: int = 0,
     test_batch_size: Optional[int] = None,
+    validation_fraction: float = 0.0,
+    calibration_in_fit: bool = False,
 ) -> List[TaskData]:
     """All classes in every task; task ``i`` applies ``transforms[i]``."""
     classes = sorted({int(value) for value in _targets(train_dataset)})
@@ -274,6 +308,8 @@ def domain_incremental_tasks(
                 batch_size,
                 num_workers,
                 evaluation_batch_size,
+                validation_fraction,
+                calibration_in_fit,
             )
         )
     return tasks
@@ -320,6 +356,8 @@ def permuted_tasks(
     batch_size: int = 64,
     num_workers: int = 0,
     test_batch_size: Optional[int] = None,
+    validation_fraction: float = 0.0,
+    calibration_in_fit: bool = False,
 ) -> List[TaskData]:
     """Fixed random input permutation per task (Permuted MNIST-style).
 
@@ -347,6 +385,8 @@ def permuted_tasks(
         num_workers=num_workers,
         seed=seed,
         test_batch_size=test_batch_size,
+        validation_fraction=validation_fraction,
+        calibration_in_fit=calibration_in_fit,
     )
 
 
@@ -377,30 +417,39 @@ def mnist_datasets(root: str):
     return train, test
 
 
-def cifar10_datasets(root: str):
-    """CIFAR-10 (train, test) with the standard normalisation (downloads)."""
-    from torchvision import datasets, transforms
+def cifar_transform(mean, std, image_size: Optional[int] = None):
+    """ToTensor + Normalize, with a Resize for backbones that need fixed size.
 
-    transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)),
-        ]
+    ViT-B/16 asserts 224x224 inputs, so its setups pass ``data.image_size: 224``.
+    """
+    from torchvision import transforms
+
+    steps = []
+    if image_size is not None:
+        steps.append(transforms.Resize(int(image_size), antialias=True))
+    steps.append(transforms.ToTensor())
+    steps.append(transforms.Normalize(mean, std))
+    return transforms.Compose(steps)
+
+
+def cifar10_datasets(root: str, image_size: Optional[int] = None):
+    """CIFAR-10 (train, test) with the standard normalisation (downloads)."""
+    from torchvision import datasets
+
+    transform = cifar_transform(
+        (0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616), image_size
     )
     train = datasets.CIFAR10(root, train=True, download=True, transform=transform)
     test = datasets.CIFAR10(root, train=False, download=True, transform=transform)
     return train, test
 
 
-def cifar100_datasets(root: str):
+def cifar100_datasets(root: str, image_size: Optional[int] = None):
     """CIFAR-100 (train, test) with the standard normalisation (downloads)."""
-    from torchvision import datasets, transforms
+    from torchvision import datasets
 
-    transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize((0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2762)),
-        ]
+    transform = cifar_transform(
+        (0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2762), image_size
     )
     train = datasets.CIFAR100(root, train=True, download=True, transform=transform)
     test = datasets.CIFAR100(root, train=False, download=True, transform=transform)
@@ -436,17 +485,21 @@ def permuted_mnist(
     return permuted_tasks(train, test, num_tasks=num_tasks, seed=seed, **kwargs)
 
 
-def split_cifar100(root: str, classes_per_task: int = 10, **kwargs) -> List[TaskData]:
+def split_cifar100(
+    root: str, classes_per_task: int = 10, image_size: Optional[int] = None, **kwargs
+) -> List[TaskData]:
     """Split CIFAR-100 into class-incremental tasks (downloads to ``root``)."""
-    train, test = cifar100_datasets(root)
+    train, test = cifar100_datasets(root, image_size)
     return class_incremental_tasks(
         train, test, contiguous_class_groups(100, classes_per_task), **kwargs
     )
 
 
-def split_cifar10(root: str, classes_per_task: int = 2, **kwargs) -> List[TaskData]:
+def split_cifar10(
+    root: str, classes_per_task: int = 2, image_size: Optional[int] = None, **kwargs
+) -> List[TaskData]:
     """Split CIFAR-10 into class-incremental tasks (downloads to ``root``)."""
-    train, test = cifar10_datasets(root)
+    train, test = cifar10_datasets(root, image_size)
     return class_incremental_tasks(
         train, test, contiguous_class_groups(10, classes_per_task), **kwargs
     )

@@ -15,7 +15,7 @@ method does what its name says.
 
 from __future__ import annotations
 
-from typing import List
+from typing import Any, List, Optional
 
 import torch
 import torch.nn as nn
@@ -47,7 +47,7 @@ class Sharpening(MethodPluginABC):
         if self._capturing:
             self._captured.append(output)
 
-    def setup_task(self, task_id: int) -> None:
+    def setup_task(self, task_id: int, task: Optional[Any] = None) -> None:
         self.activation_buffer = None
 
     def on_before_forward(self) -> None:

@@ -45,10 +45,12 @@ def scenario_of(data: Dict[str, Any]) -> str:
 
 
 def _split_kwargs(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
-    """Common fitting/calibration split settings of every task source."""
+    """Common fitting/calibration/validation split settings of every task source."""
     return {
         "calibration_fraction": float(data.get("calibration_fraction", 0.1)),
         "min_calibration": int(data.get("min_calibration", 50)),
+        "validation_fraction": float(data.get("validation_fraction", 0.0)),
+        "calibration_in_fit": bool(data.get("calibration_in_fit", False)),
         "batch_size": int(data.get("batch_size", 32)),
         "seed": int(config.get("seed", 0)),
     }
@@ -69,11 +71,11 @@ def _mnist_pair(data: Dict[str, Any], config: Dict[str, Any]):
 
 
 def _cifar10_pair(data: Dict[str, Any], config: Dict[str, Any]):
-    return cifar10_datasets(data.get("root", "data"))
+    return cifar10_datasets(data.get("root", "data"), data.get("image_size"))
 
 
 def _cifar100_pair(data: Dict[str, Any], config: Dict[str, Any]):
-    return cifar100_datasets(data.get("root", "data"))
+    return cifar100_datasets(data.get("root", "data"), data.get("image_size"))
 
 
 DATASET_PAIRS = {

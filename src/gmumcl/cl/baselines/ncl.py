@@ -39,7 +39,7 @@ Documented deviations from the upstream code:
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -95,7 +95,7 @@ class NCL(MethodPluginABC):
             self.proj_left[name] = reginv(merged["left"], 1e-4).to(module.weight.device).float()
             self.proj_right[name] = reginv(merged["right"], 1e-4).to(module.weight.device).float()
 
-    def setup_task(self, task_id: int) -> None:
+    def setup_task(self, task_id: int, task: Optional[Any] = None) -> None:
         assert self.model is not None
         self.task_id = task_id
         if not hasattr(self, "left"):
